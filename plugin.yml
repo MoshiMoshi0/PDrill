@@ -1,0 +1,12 @@
+name: PDrill
+main: me.devcom.pdrill.PDrill
+version: 0.2
+description: >
+             HERP DERP
+commands:
+  pdscript:
+    description: PDrill script command
+    usage: /pdscript <drillId> <script <...>>
+  pdload:
+    description: PDrill script load command
+    usage: /pdload <drillId> <script_name>
