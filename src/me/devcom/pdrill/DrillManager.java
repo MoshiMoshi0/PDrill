@@ -9,6 +9,7 @@ public class DrillManager {
 	public PDrill plugin;
 	
 	public final ArrayList< Drill > DrillDB = new ArrayList< Drill >();
+	//public final ArrayList< LinkManager > LinkDB = new ArrayList< LinkManager >();
 	public final Logger logger = Logger.getLogger("Minecraft");
 	
 	public DrillManager(PDrill instance){
@@ -17,10 +18,14 @@ public class DrillManager {
 	
 	public void updateDrills(){
 		for (Drill entry : DrillDB) {
-			if(entry.enabled){
+			if(entry.enabled && !entry.linked){
 				entry.update();
 			}
 		}
+		
+		//for( LinkManager entry: LinkDB){
+		//	entry.update();
+		//}
 	}
 
 	public Drill getDrillFromBlock(Block block) {

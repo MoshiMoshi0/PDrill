@@ -29,17 +29,16 @@ public class DrillPlayerListener extends PlayerListener {
     		Drill drill = drillManager.getDrillFromBlock( block );
     		
     		if(drill != null){
-    			Integer id = drill.id;
-    			if(drill.enabled){
-    				player.sendMessage( "Drill deactivated! [" + id +"]" );
-        			drill.enabled = false;
-    			}else{
-    				player.sendMessage( "Drill activated! [" + id +"]" );
-        			drill.enabled = true;
+    			if( drill.owner == player ){
+	    			if(drill.enabled){
+	    				drill.disable();
+	    			}else{
+	    				drill.enable();
+	    			}
     			}
     		}else{
     			Integer id = DrillDB.size();
-    			DrillDB.add( new Drill( player, block, id ));
+    			DrillDB.add( new Drill( plugin, player, block, id ));
     			player.sendMessage( "Drill activated! [" + id +"]" );
     		}
     	}

@@ -18,7 +18,7 @@ public class JobManager {
 		
 		valid = true;
 	}
-	
+
 	public boolean processScript( ArrayList<String> script){
 		if(!valid) return false;
 		
@@ -32,7 +32,8 @@ public class JobManager {
 				return false;
 			}
 			
-			Job job = new Job(drill, dir, Integer.parseInt( len ));
+			Job job = new Job(drill, dir, Integer.parseInt( len ));	
+			
 			JobDB.add(job);
 		}
 		
@@ -52,6 +53,17 @@ public class JobManager {
 			}
 		}else{
 			hasJob = false;
+		}
+	}
+	
+	public Job getCurrentJob(){
+		Job job = JobDB.get( 0 );
+		if(job.valid){
+			job.process();
+			return job;
+		}else{
+			JobDB.remove( 0 );
+			return JobDB.get( 0 );
 		}
 	}
 	

@@ -7,9 +7,15 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
+import org.bukkit.inventory.ItemStack;
+//import org.bukkit.util.Vector;
 
 public class Drill {
+	PDrill plugin;
+	
+	//LinkManager linkManager = null;
+	boolean linked = false;
+	
 	public Player owner;
 	public Location position;
 	public Block block;
@@ -18,6 +24,7 @@ public class Drill {
 	public JobManager JobMG;
 	public FuelManager FuelMG;
 	
+	public Integer blockCount = 0;
 	public Location forwardDir;
 	public Location backwardDir;
 	public Location rightDir;
@@ -27,7 +34,8 @@ public class Drill {
 
 	public final Logger logger = Logger.getLogger("Minecraft");
 	
-	public Drill(Player player, Block block, Integer id){
+	public Drill(PDrill instance, Player player, Block block, Integer id){
+		plugin = instance;
 		this.owner = player;
 		this.block = block;
 		this.id = id;
@@ -38,66 +46,65 @@ public class Drill {
 		FuelMG = new FuelManager( this );
 		
 		World world = block.getWorld();
-		
-		Vector dir = getBlockPlayerDirection( block, player);
-		forwardDir = dir.toLocation( world );
-		rightDir = dir.crossProduct( new Vector( 0, 1, 0) ).toLocation(world);
-		
-		dir.multiply( -1 );
-		backwardDir = dir.toLocation( world );
-		leftDir = dir.crossProduct( new Vector( 0, 1, 0) ).toLocation(world);
-		
+
 		upDir = new Location(world, 0,1,0);
 		downDir = new Location( world, 0,-1,0);
 		
+		forwardDir = new Location( world, 1,0,0);
+		backwardDir = new Location( world, -1,0,0);
+		
+		rightDir = new Location( world, 0,0,1);
+		leftDir = new Location( world, 0,0,-1);
+
 	}
 	
-	private Vector getBlockPlayerDirection(Block block, Player player) {
-		Vector playerVec = player.getLocation().toVector();
-		Vector playerBlockVec = toBlockVector( playerVec );
-		
-		Vector blockVec = block.getLocation().toVector();
-		Vector blockBlockVec = toBlockVector( blockVec );
-		
-		Vector dir = blockBlockVec.subtract( playerBlockVec );
-		
-		dir.setY( 0 );
-		if(dir.getX() > dir.getZ()){
-			dir.setZ( 0 );
-		}else if(dir.getX() < dir.getZ()){
-			dir.setX( 0 );
-		}else if(dir.getX() == dir.getZ()){
-			dir.setZ( 0 );
-		}
-		
-		return dir.normalize();
-	}
-
-	private Vector toBlockVector(Vector v) {
-		return new Vector( v.getBlockX(),v.getBlockY(), v.getBlockZ());
-	}
-
 	public void update(){
 		JobMG.doJob();
 	}
 
 	public boolean moveToLocation(Location nextLoc) {
-		if( FuelMG.hasFuel() ){
+		if( FuelMG.getFuelLevel() > 0){
+			Fuel fuel = FuelMG.fuel();
 			
 			Block nextBlock = block.getWorld().getBlockAt( nextLoc );
+			dropBlock( nextBlock );
 			nextBlock.setTypeId( Material.FURNACE.getId() );
 			
+			if( blockCount >= fuel.fuelConsumptionBlockCount){
+				FuelMG.consumeFuel();
+				blockCount = 0;
+			}
 			FuelMG.swapFuel( nextBlock );
 			
 			block.setTypeId( 0 );
 			block = nextBlock;
 			
-			FuelMG.consumeFuel();
-			
+			blockCount++;
 			return true;
-		}else{
-			enabled = false;
-			return false;
+		}
+		return false;
+	}
+
+	private void dropBlock(Block nextBlock) {
+		if( plugin.configManager.dropItemNaturally){
+			if( nextBlock.getTypeId() != Material.AIR.getId() ){
+				boolean drop = false;
+				Integer dropId = nextBlock.getTypeId();
+				
+				if(plugin.configManager.drops.containsKey( dropId )){
+					dropId = plugin.configManager.drops.get( dropId );
+				}
+				
+				if( plugin.configManager.dropItemList.isEmpty() ){
+					drop = true;
+				}else if( plugin.configManager.dropItemList.contains( dropId )){
+					drop = true;
+				}
+				if( drop ){
+					ItemStack dropStack = new ItemStack( dropId, 1 );
+	                block.getWorld().dropItemNaturally( nextBlock.getLocation() , dropStack);
+				}
+			}
 		}
 	}
 
@@ -119,5 +126,15 @@ public class Drill {
 		}
 		
 		return dirLoc;
+	}
+
+	public void disable() {
+		owner.sendMessage( "Drill deactivated! [" + id +"]" );
+		enabled = false;
+	}
+	
+	public void enable() {
+		owner.sendMessage( "Drill activated! [" + id +"]" );
+		enabled = true;
 	}
 }

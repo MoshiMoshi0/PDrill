@@ -2,7 +2,7 @@ name: PDrill
 main: me.devcom.pdrill.PDrill
 version: 0.2
 description: >
-             HERP DERP
+             Bukkit programable drill plugin.
 commands:
   pdscript:
     description: PDrill script command
@@ -10,3 +10,18 @@ commands:
   pdload:
     description: PDrill script load command
     usage: /pdload <drillId> <script_name>
+  pdcreate:
+    description: Create new [scripts / fuels]
+    usage: /pdcreate <script | fuel> <name> [script]
+  pddelete:
+    description: Delete [scripts / fuels]
+    usage: /pddelete <script | fuel> <name>
+  pdchange:
+    description: Change settings for [scripts / fuels]
+    usage: /pdchange <script | fuel> <name> <setting_name> <val>
+  pdlist:
+    description: List [scripts / fuels / drills]
+    usage: /pdlist <script | fuel | drill>
+  pdmake:
+    description: Loads advanced / predefined script
+    usage: /pdmake <name> <args>

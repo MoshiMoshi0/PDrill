@@ -2,10 +2,7 @@ package me.devcom.pdrill;
 
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.bukkit.command.Command;
@@ -25,11 +22,8 @@ public class PDrill extends JavaPlugin {
 	public final DrillPlayerListener playerListener = new DrillPlayerListener( this );
 	public final Logger logger = Logger.getLogger("Minecraft");
 	public final String prefix = "[PDrill] ";
-	
-	public File scriptFile;
-	public File configFile;
-	public Properties scriptCfg = new Properties();
-	public Properties configCfg = new Properties();
+
+	public final ConfigurationManager configManager = new ConfigurationManager(this, "config.yml", "plugins/PDrill/");
 
 	@Override 
 	public void onDisable(){
@@ -51,36 +45,40 @@ public class PDrill extends JavaPlugin {
 			dir.mkdirs();
 		}
 		
-		scriptFile = loadFile("scripts.yml", "plugins/PDrill/");
-		configFile = loadFile("config.yml", "plugins/PDrill/");
-		
-		loadCfg( scriptCfg, scriptFile);
-		loadCfg( configCfg, configFile);
-		
 		Runnable runnable = new Runnable(){
 			public void run(){
 				plugin.drillManager.updateDrills();
 			}
 		};
-		sheduler.scheduleSyncRepeatingTask( plugin, runnable, 4, 4);
+		sheduler.scheduleSyncRepeatingTask( plugin, runnable, 2, 2);
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
+		
+		configManager.load();
 		this.logger.info( prefix + pdfFile.getName() + " [ver: " + pdfFile.getVersion() + "] is enabled!");
 	}
 	
 	//@Override
 	public boolean onCommand( CommandSender sender, Command cmd, String commandLabel, String[] args){
-		Integer ret = -1;
-
 		if( commandLabel.equalsIgnoreCase("pdscript") || commandLabel.equalsIgnoreCase("pdload")){
+
 			ArrayList<Integer> drillIds = new ArrayList<Integer>();
 			ArrayList<String> script = new ArrayList<String>();
 			
 			String[] idArgs = args[0].split( "," );
-
-			for(Integer i = 0; i < idArgs.length; i++){
-				Integer id = Integer.parseInt( idArgs[i] );
-				drillIds.add( id  );
+			Integer argCount = idArgs.length;
+			for(Integer i = 0; i < argCount; i++){
+				if(argCount >= 2 && i <= argCount - 3 && idArgs[i + 1].equals( "..." ) ){
+					Integer start = Integer.parseInt( idArgs[i] );
+					Integer end = Integer.parseInt( idArgs[i + 2] );
+					for(Integer j = start; j <= end; j++){
+						drillIds.add( j  );
+					}
+					i += 2;
+				}else{
+					Integer id = Integer.parseInt( idArgs[i] );
+					drillIds.add( id  );
+				}
 			}
 			
 			if(commandLabel.equalsIgnoreCase("pdscript")){
@@ -90,71 +88,211 @@ public class PDrill extends JavaPlugin {
 			}else if(commandLabel.equalsIgnoreCase("pdload")){
 				String scriptName = args[1];
 					
-				String scriptString = scriptCfg.getProperty( scriptName );
-				String[] scriptArgs = scriptString.split( " " );
-
-				for(Integer i = 0; i < scriptArgs.length; i++){
-					script.add( scriptArgs[i] );
+				String scriptString = configManager.getScript( scriptName );
+				if(scriptString != ""){
+					String[] scriptArgs = scriptString.split( " " );
+	
+					for(Integer i = 0; i < scriptArgs.length; i++){
+						script.add( scriptArgs[i] );
+					}
+				}else{
+					logger.info( prefix + "No such script!");
 				}
 			}
 			
-			for(Integer drillId : drillIds){
-				Drill drill = drillManager.getDrillFromId( drillId );
-				if( drill != null){
-					if(drill.enabled){
-						ret = drill.JobMG.addScript( script );
-					} else {
-						ret = -1;
-						sender.sendMessage(prefix + "["+ drillId +"] Drill is disabled!");
+			sendScripts(sender, drillIds, script);
+		}else if( commandLabel.equalsIgnoreCase( "pdcreate" ) ){
+			String what = args[0];
+			
+			if(args.length < 2){
+				return false;
+			}
+			
+			if(what.equalsIgnoreCase( "script" )){
+				
+				String name = args[1];
+				String script = "";
+				
+				if(configManager.getScript( name ) != ""){
+					sender.sendMessage( prefix + "Script with name [" + name + "] allready exists!" );
+					return true;
+				}
+				
+				configManager.config.load();
+				
+				if(args.length > 2){
+					for(Integer i = 2; i < args.length; i++){
+						script += args[i];
+						if( i < args.length - 1 ){
+							script += " ";
+						}
 					}
-				} else {
-					ret = -1;
-					sender.sendMessage(prefix + "["+ drillId +"] No such drill!");
-				}
 					
-				if(ret == 1){
-					sender.sendMessage(prefix + "["+ drillId +"] Script compiling passed!");
-				}else if(ret == 0){
-					sender.sendMessage(prefix + "["+ drillId +"] Script compiling failed!");
-				}else if(ret == 2){
-					sender.sendMessage(prefix + "["+ drillId +"] Drill is allready running a script!");
+					configManager.config.setProperty("script." + name + ".script", script);
+				}else{
+					configManager.config.setProperty("script." + name + ".script", "");
 				}
+				
+				configManager.scripts.put(name, script);
+				configManager.config.save();
+			}else if( what.equalsIgnoreCase("fuel") ){
+				String name = args[1];
+				Integer id, airSpeed, blockSpeed, blockCount, fuelCount;
+				
+				if( args.length >= 3){
+					id = Integer.parseInt( args[2] );
+					
+					if(args.length >= 4){
+						airSpeed = Integer.parseInt( args[3] );
+						
+						if( args.length >= 5){
+							blockSpeed = Integer.parseInt( args[4] );
+							
+							if(args.length >= 6){
+								blockCount = Integer.parseInt( args[5] );
+								
+								if(args.length >= 7){
+									fuelCount = Integer.parseInt( args[6] );
+								}else{
+									fuelCount = 1;
+								}
+							}else{
+								blockCount = 1;
+								fuelCount = 1;
+							}
+						}else{
+							blockSpeed = 1;
+							blockCount = 1;
+							fuelCount = 1;
+						}
+					}else{
+						airSpeed = 1;
+						blockSpeed = 1;
+						blockCount = 1;
+						fuelCount = 1;
+					}
+				}else{
+					id = -1;
+					airSpeed = 1;
+					blockSpeed = 1;
+					blockCount = 1;
+					fuelCount = 1;
+				}
+				
+				configManager.config.load();
+				
+				configManager.config.setProperty("fuel." + name + ".fuelId", id);
+				configManager.config.setProperty("fuel." + name + ".drillAirSpeed", airSpeed);
+				configManager.config.setProperty("fuel." + name + ".drillBlockSpeed", blockSpeed);
+				configManager.config.setProperty("fuel." + name + ".fuelConsumptionBlockCount",blockCount);
+				configManager.config.setProperty("fuel." + name + ".fuelConsumptionFuelCount", fuelCount);
+				
+			    Fuel fuel = new Fuel(id, airSpeed, blockSpeed, blockCount, fuelCount);
+			    configManager.fuels.put(id, fuel);
+			    
+				configManager.config.save();
+			}
+		}else if(commandLabel.equalsIgnoreCase( "pdmake" )){
+			String what = args[0];
+			
+			Toggler fbToggler = new Toggler( "f", "b");
+			Toggler rlToggler = new Toggler( "r", "l");
+			Toggler udToggler = new Toggler( "u", "d");
+			
+			if(what.equalsIgnoreCase( "room" )){
+				ArrayList<Integer> drillIds = new ArrayList<Integer>();
+				ArrayList<String> script = new ArrayList<String>();
+				
+				String[] idArgs = args[1].split( "," );
+				Integer argCount = idArgs.length;
+				for(Integer i = 0; i < argCount; i++){
+					if(argCount >= 2 && i <= argCount - 3 && idArgs[i + 1].equals( "..." ) ){
+						Integer start = Integer.parseInt( idArgs[i] );
+						Integer end = Integer.parseInt( idArgs[i + 2] );
+						for(Integer j = start; j <= end; j++){
+							drillIds.add( j  );
+						}
+						i += 2;
+					}else{
+						Integer id = Integer.parseInt( idArgs[i] );
+						drillIds.add( id  );
+					}
+				}
+				
+				Integer xS,yS,zS;
+				Integer x,y,z;
+				
+				x = Integer.parseInt( args[2] );
+				y = Integer.parseInt( args[3] );
+				z = Integer.parseInt( args[4] );
+				
+				if( x < 0){
+					fbToggler.toggle();
+					x *= -1;
+				}
+				if( y < 0){
+					udToggler.toggle();
+					y *= -1;
+				}
+				if( z < 0){
+					rlToggler.toggle();
+					z *= -1;
+				}
+				
+				xS = x - 1;
+				yS = y;
+				zS = z - 1;
+				
+				y = 1;
+				while( y <= yS ){
+					
+					z = zS;
+					while( z >= 0 ){
+						
+						script.add( fbToggler.data() + xS);
+						if( z > 0 )
+							script.add( rlToggler.data() + 1);
+						
+						fbToggler.toggle();
+						z--;
+					}
+					if( y < yS )
+						script.add( udToggler.data() + 1);
+					
+					rlToggler.toggle();
+					y++;
+				}
+				
+				sendScripts(sender, drillIds, script);
 			}
 		}
 		
 		return true;
 	}
-	
-	public File loadFile( String name, String dir ){
-		File file = new File( dir + name );
-		if(!file.exists()){
+
+	private void sendScripts(CommandSender sender, ArrayList<Integer> drillIds, ArrayList<String> script) {
+		Integer ret;
+		for(Integer drillId : drillIds){
+			Drill drill = drillManager.getDrillFromId( drillId );
+			ret = -1;
 			
-			try {
-				file.createNewFile();
-			} catch ( IOException e ){
-				logger.info(prefix + "File creation failed! (" + e.toString() + ")");
-				return null;
-			} finally {
-				logger.info(prefix + "File creation succeeded!");
+			if( drill != null){
+				if(drill.enabled){
+					ret = drill.JobMG.addScript( script );
+				} else {
+					sender.sendMessage(prefix + "["+ drillId +"] Drill is disabled!");
+				}
+			} else {
+				sender.sendMessage(prefix + "["+ drillId +"] No such drill!");
 			}
-			
-		}
-		return file;
-	}
-	
-	public boolean loadCfg(Properties cfg, File file ){
-		if( file != null ){
-			FileInputStream in;
-			try {
-				in = new FileInputStream( file );
-				cfg.load(in);
-				in.close();
-				return true;
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
+				
+			if(ret == 1){
+				sender.sendMessage(prefix + "["+ drillId +"] Script compiling passed!");
+			}else if(ret == 0){
+				sender.sendMessage(prefix + "["+ drillId +"] Script compiling failed!");
+			}else if(ret == 2){
+				sender.sendMessage(prefix + "["+ drillId +"] Drill is allready running a script!");
 			}
 		}
-		return false;
 	}
 }
