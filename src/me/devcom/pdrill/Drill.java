@@ -8,7 +8,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-//import org.bukkit.util.Vector;
+import org.bukkit.util.Vector;
 
 public class Drill {
 	PDrill plugin;
@@ -50,12 +50,29 @@ public class Drill {
 		upDir = new Location(world, 0,1,0);
 		downDir = new Location( world, 0,-1,0);
 		
-		forwardDir = new Location( world, 1,0,0);
-		backwardDir = new Location( world, -1,0,0);
+		Vector direction = player.getLocation().getDirection();
+		if (direction.getZ() > .5d) {
+			forwardDir = new Location(world, 0, 0, 1);
+			rightDir = new Location(world, -1, 0, 0);
+		} else if (direction.getZ() < -.5d) {
+			forwardDir = new Location(world, 0, 0, -1);
+			rightDir = new Location(world, 1, 0, 0);
+		} else if (direction.getX() > .5d) {
+			forwardDir = new Location(world, 1, 0, 0);
+			rightDir = new Location(world, 0, 0, 1);
+		} else if (direction.getX() < -.5d) {
+			forwardDir = new Location(world, -1, 0, 0);
+			rightDir = new Location(world, 0, 0, -1);
+		} else {
+			forwardDir = new Location(world, 0, 0, -1);
+			rightDir = new Location(world, 1, 0, 0);
+		}
 		
-		rightDir = new Location( world, 0,0,1);
-		leftDir = new Location( world, 0,0,-1);
-
+		backwardDir = new Location( world, forwardDir.getBlockX(), forwardDir.getBlockY(), forwardDir.getBlockZ());
+		backwardDir.multiply(-1);
+		
+		leftDir = new Location(world, rightDir.getBlockX(), rightDir.getBlockY(), rightDir.getBlockZ());
+		leftDir.multiply(-1);
 	}
 	
 	public void update(){
