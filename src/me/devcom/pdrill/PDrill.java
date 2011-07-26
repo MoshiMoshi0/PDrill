@@ -76,8 +76,14 @@ public class PDrill extends JavaPlugin {
 					}
 					i += 2;
 				}else{
-					Integer id = Integer.parseInt( idArgs[i] );
-					drillIds.add( id  );
+					Integer id;
+					try {
+						id = Integer.parseInt( idArgs[i] );
+						drillIds.add( id  );
+					} catch (NumberFormatException e) {
+						sender.sendMessage(idArgs[i] + " is not a valid number");
+						break;
+					}
 				}
 			}
 			

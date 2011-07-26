@@ -39,7 +39,6 @@ public class DrillPlayerListener extends PlayerListener {
     		}else{
     			Integer id = DrillDB.size();
     			DrillDB.add( new Drill( plugin, player, block, id ));
-    			player.sendMessage( "Drill activated! [" + id +"]" );
     		}
     	}
 	}
