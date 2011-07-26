@@ -40,7 +40,7 @@ public class Drill {
 		this.block = block;
 		this.id = id;
 		
-		enabled = true;
+		this.enable();
 		
 		JobMG = new JobManager( this );
 		FuelMG = new FuelManager( this );
