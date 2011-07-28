@@ -3,9 +3,7 @@ package me.devcom.pdrill;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 
 public class Job {
@@ -36,7 +34,7 @@ public class Job {
 	}
 */
 	public boolean process(){
-		if( !valid || drill.linked ){
+		if( !valid ){
 			return false;
 		}
 		
@@ -63,7 +61,7 @@ public class Job {
 			
 			if(fuel != null){
 
-				Block nextBlock = getNextBlock();
+				Block nextBlock = drill.getNextBlock( direction );
 				if(nextBlock.getTypeId() ==  Material.AIR.getId() ){
 					if( tickCounter >= fuel.drillAirSpeed){
 						tickCounter = 0;
@@ -77,8 +75,10 @@ public class Job {
 				}
 				
 				if(canMove){
-					if( drill.moveToLocation( nextBlock.getLocation() ) ){
+					if( drill.canMoveInDirection( direction ) ){
+						if( drill.moveInDirection( direction ) ){
 						length--;
+						}
 					}
 				}
 			}else{
@@ -89,21 +89,6 @@ public class Job {
 		}else{
 			valid = false;
 		}
-	}
-
-	public Block getNextBlock() {
-		Block drillBlock = drill.block;
-		Location location = drillBlock.getLocation();
-		World world = drillBlock.getWorld();
-		
-		int x = location.getBlockX();
-		int y = location.getBlockY();
-		int z = location.getBlockZ();
-		
-		Location nextLoc = new Location(world, x, y, z);
-		nextLoc.add( drill.getDirection( direction ));
-		
-		return world.getBlockAt( nextLoc );
 	}
 	
 }

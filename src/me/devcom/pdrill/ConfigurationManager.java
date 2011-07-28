@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.bukkit.util.config.Configuration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
@@ -26,9 +27,13 @@ public class ConfigurationManager {
 	public HashMap< String, String > scripts = new HashMap< String, String>();
 	public HashMap< Integer, Fuel > fuels = new HashMap< Integer, Fuel > ();
 	public HashMap< Integer, Integer > drops = new HashMap< Integer, Integer > ();
+	public HashMap< Integer, Integer > placeCosts = new HashMap< Integer, Integer > ();
+	
+	public double blockSpeed = 0.1;
 	
 	public boolean dropItemNaturally;
 	public List<Integer> dropItemList;
+	public List< Integer > stopblocks = new ArrayList< Integer >();
 	
 	public ConfigurationManager(PDrill instance, String name, String dir) {
 		plugin = instance;
@@ -45,7 +50,11 @@ public class ConfigurationManager {
 		
 		dropItemNaturally = config.getBoolean( "config.dropItemNaturally", false );
 		dropItemList = config.getIntList( "config.dropItemList", null );
+		blockSpeed = config.getDouble("config.speed", 0.1);
+		stopblocks = config.getIntList("config.stopBlocks", null);
 		
+		
+		loadPlaceCosts();
 		loadDrops();
 		loadScripts();
 		loadFuels();
@@ -59,6 +68,20 @@ public class ConfigurationManager {
 		config.save();
 	}
 	
+	private void loadPlaceCosts() {
+		List<String> costList = config.getStringList("config.itemPlaceCost", null);
+		if( costList != null){
+			for( String dropNode : costList ){
+				String[] splitNode = dropNode.split( ";" );
+				Integer fuel = Integer.parseInt( splitNode[0] );
+				Integer cost = Integer.parseInt( splitNode[1] );
+				
+				placeCosts.put(fuel, cost);
+			}
+			//logger.info( prefix + "Drops loaded!");
+		}
+	}
+
 	public void loadDrops() {
 		List<String> dropList = config.getStringList("config.dropItemChange", null);
 		if( dropList != null){
@@ -70,9 +93,7 @@ public class ConfigurationManager {
 				//logger.info( prefix + "Id [" + sourceId + "] converts to [" + targetId + "]");
 				drops.put(sourceId, targetId);
 			}
-			logger.info( prefix + "Drops loaded!");
-		}else{
-			logger.info( prefix + "Id");
+			//logger.info( prefix + "Drops loaded!");
 		}
 	}
 
@@ -87,9 +108,7 @@ public class ConfigurationManager {
 				//logger.info( prefix + "New script added! [" + name + "][" + script + "]");
 				scripts.put(name, script);
 			}
-			logger.info( prefix + "Scripts loaded!");
-		}else{
-			logger.info( prefix + "No scripts in config");
+			//logger.info( prefix + "Scripts loaded!");
 		}
 	}
 
@@ -108,9 +127,7 @@ public class ConfigurationManager {
 			    //logger.info( prefix + "New fuel added! [" + fuelId + " " + drillAirSpeed + " " + drillBlockSpeed + " " + fuelConsumptionBlockCount + " " + fuelConsumptionFuelCount + "]");
 			    fuels.put(fuelId, fuel);
 			}
-			logger.info( prefix + "Fuels loaded!");
-		}else{
-			logger.info( prefix + "No fuels in config");
+			//logger.info( prefix + "Fuels loaded!");
 		}
 	}
 
@@ -125,10 +142,17 @@ public class ConfigurationManager {
 				return null;
 			} finally {
 				logger.info(prefix + "File creation succeeded!");
+				
+				createDefaultConfig( file );
 			}
 			
 		}
 		return file;
+	}
+
+	private void createDefaultConfig(File file) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	public String getScript(String scriptName) {

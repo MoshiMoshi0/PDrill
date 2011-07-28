@@ -3,10 +3,12 @@ package me.devcom.pdrill;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
@@ -43,49 +45,27 @@ public class PDrill extends JavaPlugin {
 		File dir = new File( "plugins/PDrill" );
 		if(!dir.exists()){
 			dir.mkdirs();
-		}
+		}	
+		
+		configManager.load();
 		
 		Runnable runnable = new Runnable(){
 			public void run(){
 				plugin.drillManager.updateDrills();
 			}
 		};
-		sheduler.scheduleSyncRepeatingTask( plugin, runnable, 2, 2);
+		sheduler.scheduleSyncRepeatingTask( plugin, runnable, (long)(configManager.blockSpeed * 20), (long)(configManager.blockSpeed * 20));
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
-		
-		configManager.load();
 		this.logger.info( prefix + pdfFile.getName() + " [ver: " + pdfFile.getVersion() + "] is enabled!");
 	}
 	
 	//@Override
 	public boolean onCommand( CommandSender sender, Command cmd, String commandLabel, String[] args){
 		if( commandLabel.equalsIgnoreCase("pdscript") || commandLabel.equalsIgnoreCase("pdload")){
-
-			ArrayList<Integer> drillIds = new ArrayList<Integer>();
-			ArrayList<String> script = new ArrayList<String>();
 			
-			String[] idArgs = args[0].split( "," );
-			Integer argCount = idArgs.length;
-			for(Integer i = 0; i < argCount; i++){
-				if(argCount >= 2 && i <= argCount - 3 && idArgs[i + 1].equals( "..." ) ){
-					Integer start = Integer.parseInt( idArgs[i] );
-					Integer end = Integer.parseInt( idArgs[i + 2] );
-					for(Integer j = start; j <= end; j++){
-						drillIds.add( j  );
-					}
-					i += 2;
-				}else{
-					Integer id;
-					try {
-						id = Integer.parseInt( idArgs[i] );
-						drillIds.add( id  );
-					} catch (NumberFormatException e) {
-						sender.sendMessage(idArgs[i] + " is not a valid number");
-						break;
-					}
-				}
-			}
+			ArrayList<String> script = new ArrayList<String>();
+			ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[0] );
 			
 			if(commandLabel.equalsIgnoreCase("pdscript")){
 				for(Integer i = 1; i < args.length; i++){
@@ -107,6 +87,40 @@ public class PDrill extends JavaPlugin {
 			}
 			
 			sendScripts(sender, drillIds, script);
+		}else if( commandLabel.equalsIgnoreCase( "pdlink" ) ){
+			ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[0]);
+			
+			boolean fail = false;
+			for( Integer id : drillIds ){
+				Drill drill = drillManager.getDrillFromId( id );
+				
+				if(drill == null){
+					sender.sendMessage( prefix + "Linking failed! No drill with id [" + id + "]");
+					fail = true;
+				}else if( drill.linked ){
+					sender.sendMessage( prefix + "Linking failed! Drill with id [" + id + "] is allready linked");
+					fail = true;
+				}
+			}
+			
+			if(!fail){
+				ArrayList< Drill > drills = new ArrayList< Drill >();
+				for( Integer id : drillIds ){
+					Drill drill = drillManager.getDrillFromId( id );
+					
+					drill.linked = true;
+					drills.add( drill );
+				}
+				Player player = (Player)sender;
+				Integer id = drillManager.LinkDB.size() + 1;
+				Fuel fuel = configManager.fuels.get( Integer.parseInt( args[1] ) );
+				
+				LinkDrill lDrill = new LinkDrill( this, player, drills, id, fuel );
+				drillManager.LinkDB.add( lDrill );
+				
+				sender.sendMessage( prefix + "Linked " + drillIds.toString() + " to [" + -id + "]");
+			}
+			return true;
 		}else if( commandLabel.equalsIgnoreCase( "pdcreate" ) ){
 			String what = args[0];
 			
@@ -198,6 +212,49 @@ public class PDrill extends JavaPlugin {
 			    
 				configManager.config.save();
 			}
+		}else if(commandLabel.equalsIgnoreCase( "pdlist" )){
+			String what = args[0];
+			
+			if(what.equalsIgnoreCase( "drill" )){
+				 ArrayList< Drill > ownedDrills = drillManager.getDrillsByOwner( (Player)sender );
+				 
+				 sender.sendMessage( "Drills: " + ownedDrills.size() );
+				 sender.sendMessage( "----------------------------" );
+				 for( Drill entry : ownedDrills ){
+					 Fuel fuel = entry.FuelMG.fuel();
+					 sender.sendMessage( "ID: " +entry.id+ "ENABLED: " +entry.enabled+ "FUEL_ID: " +fuel.block_id+ "FUEL_LEFT: " +fuel.block_id+ "POSITION: " + entry.block.getLocation().toString());
+				 }
+				 sender.sendMessage( "----------------------------" );
+			}else if(what.equalsIgnoreCase( "fuel" )){
+				 sender.sendMessage( "Fuels: " + configManager.fuels.size() );
+				 sender.sendMessage( "----------------------------" );
+				 int i = 0;
+				 for( Entry<Integer, Fuel> entry : configManager.fuels.entrySet()){
+					 i++;
+					 Fuel fuel = entry.getValue();
+					 sender.sendMessage(" " + i + ":" );
+					 sender.sendMessage("     " +"fuelId: " + fuel.block_id);
+					 sender.sendMessage("     " +"drillAirSpeed: " + fuel.drillAirSpeed );
+					 sender.sendMessage("     " +"drillBlockSpeed: " + fuel.drillBlockSpeed );
+					 sender.sendMessage("     " +"fuelConsumptionBlockCount: " + fuel.fuelConsumptionBlockCount );
+					 sender.sendMessage("     " +"fuelConsumptionFuelCount: " + fuel.fuelConsumptionFuelCount );
+				 }
+				 sender.sendMessage( "----------------------------" );
+			}else if(what.equalsIgnoreCase( "script" )){
+				 sender.sendMessage( "Scripts: " + configManager.scripts.size() );
+				 sender.sendMessage( "----------------------------" );
+				 int i = 0;
+				 for( Entry<String, String> entry : configManager.scripts.entrySet()){
+					 i++;
+					 String name = entry.getKey();
+					 String script = entry.getValue();
+					 sender.sendMessage(" " + i + ": [" + name + "]");
+					 sender.sendMessage("     " +"Script: " + script );
+				 }
+				 sender.sendMessage( "----------------------------" );
+			}else{
+				
+			}
 		}else if(commandLabel.equalsIgnoreCase( "pdmake" )){
 			String what = args[0];
 			
@@ -206,24 +263,8 @@ public class PDrill extends JavaPlugin {
 			Toggler udToggler = new Toggler( "u", "d");
 			
 			if(what.equalsIgnoreCase( "room" )){
-				ArrayList<Integer> drillIds = new ArrayList<Integer>();
 				ArrayList<String> script = new ArrayList<String>();
-				
-				String[] idArgs = args[1].split( "," );
-				Integer argCount = idArgs.length;
-				for(Integer i = 0; i < argCount; i++){
-					if(argCount >= 2 && i <= argCount - 3 && idArgs[i + 1].equals( "..." ) ){
-						Integer start = Integer.parseInt( idArgs[i] );
-						Integer end = Integer.parseInt( idArgs[i + 2] );
-						for(Integer j = start; j <= end; j++){
-							drillIds.add( j  );
-						}
-						i += 2;
-					}else{
-						Integer id = Integer.parseInt( idArgs[i] );
-						drillIds.add( id  );
-					}
-				}
+				ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[1]);
 				
 				Integer xS,yS,zS;
 				Integer x,y,z;
@@ -271,9 +312,62 @@ public class PDrill extends JavaPlugin {
 				
 				sendScripts(sender, drillIds, script);
 			}
+		}else if(commandLabel.equalsIgnoreCase( "pdplace" )){
+			ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[0]);
+			
+			for( Integer id : drillIds ){
+				Drill drill = drillManager.getDrillFromId( id );
+				
+				if(drill != null){
+					if(drill.blockPlaceManager == null){
+						drill.blockPlaceManager = new BlockPlaceManager( drill, Integer.parseInt(args[1]), args[2]);
+					}else{
+						drill.blockPlaceManager.blockPlaceInterval = Integer.parseInt(args[1]);
+						drill.blockPlaceManager.placeDirection = args[2];
+					}
+				}else{
+					//sender.sendMessage( prefix + "");
+				}
+			}
 		}
 		
 		return true;
+	}
+
+	private ArrayList<Integer> getDrillIdsFromString(CommandSender sender, String string) {
+		ArrayList<Integer> drillIds = new ArrayList<Integer>();
+		
+		String[] idArgs = string.split( "," );
+		Integer argCount = idArgs.length;
+		for(Integer i = 0; i < argCount; i++){
+			if(argCount >= 2 && i <= argCount - 3 && idArgs[i + 1].equals( "..." ) ){
+				Integer start = null;
+				Integer end = null;
+				try {
+					start = Integer.parseInt( idArgs[i] );
+					end = Integer.parseInt( idArgs[i + 2] );
+				} catch (NumberFormatException e) {
+			 		sender.sendMessage(prefix + start + " or " + end + " is not a valid number");
+			 		break;
+				}finally {
+					for(Integer j = start; j <= end; j++){
+						drillIds.add( j  );
+					}
+					i += 2;
+				}
+			}else{
+				Integer id = null;
+			 	try {
+			 		id = Integer.parseInt( idArgs[i] );
+			 		drillIds.add( id  );
+			 	} catch (NumberFormatException e) {
+			 		sender.sendMessage(prefix + id + " is not a valid number");
+			 		break;
+			 	}
+			}
+		}
+		
+		return drillIds;
 	}
 
 	private void sendScripts(CommandSender sender, ArrayList<Integer> drillIds, ArrayList<String> script) {
@@ -283,10 +377,14 @@ public class PDrill extends JavaPlugin {
 			ret = -1;
 			
 			if( drill != null){
-				if(drill.enabled){
-					ret = drill.JobMG.addScript( script );
-				} else {
-					sender.sendMessage(prefix + "["+ drillId +"] Drill is disabled!");
+				if(!drill.linked){
+					if(drill.enabled){
+						ret = drill.JobMG.addScript( script );
+					} else {
+						sender.sendMessage(prefix + "["+ drillId +"] Drill is disabled!");
+					}
+				}else{
+					sender.sendMessage(prefix + "["+ drillId +"] Drill is linked!");
 				}
 			} else {
 				sender.sendMessage(prefix + "["+ drillId +"] No such drill!");
