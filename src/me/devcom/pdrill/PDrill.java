@@ -74,7 +74,7 @@ public class PDrill extends JavaPlugin {
 			}else if(commandLabel.equalsIgnoreCase("pdload")){
 				String scriptName = args[1];
 					
-				String scriptString = configManager.getScript( scriptName );
+				String scriptString = configManager.getScriptByName( scriptName );
 				if(scriptString != ""){
 					String[] scriptArgs = scriptString.split( " " );
 	
@@ -113,12 +113,16 @@ public class PDrill extends JavaPlugin {
 				}
 				Player player = (Player)sender;
 				Integer id = drillManager.LinkDB.size() + 1;
-				Fuel fuel = configManager.fuels.get( Integer.parseInt( args[1] ) );
+				Fuel fuel = configManager.getFuelByName( args[1] );
 				
-				LinkDrill lDrill = new LinkDrill( this, player, drills, id, fuel );
-				drillManager.LinkDB.add( lDrill );
+				if(fuel != null){
+					LinkDrill lDrill = new LinkDrill( this, player, drills, id, fuel );
+					drillManager.LinkDB.add( lDrill );
 				
-				sender.sendMessage( prefix + "Linked " + drillIds.toString() + " to [" + -id + "]");
+					sender.sendMessage( prefix + "Linked " + drillIds.toString() + " to [" + -id + "]");
+				}else{
+					sender.sendMessage( prefix + "No such fuel [" + args[1] + "] in database");
+				}
 			}
 			return true;
 		}else if( commandLabel.equalsIgnoreCase( "pdcreate" ) ){
@@ -133,7 +137,7 @@ public class PDrill extends JavaPlugin {
 				String name = args[1];
 				String script = "";
 				
-				if(configManager.getScript( name ) != ""){
+				if(configManager.getScriptByName( name ) != ""){
 					sender.sendMessage( prefix + "Script with name [" + name + "] allready exists!" );
 					return true;
 				}
@@ -207,7 +211,7 @@ public class PDrill extends JavaPlugin {
 				configManager.config.setProperty("fuel." + name + ".fuelConsumptionBlockCount",blockCount);
 				configManager.config.setProperty("fuel." + name + ".fuelConsumptionFuelCount", fuelCount);
 				
-			    Fuel fuel = new Fuel(id, airSpeed, blockSpeed, blockCount, fuelCount);
+			    Fuel fuel = new Fuel(id, airSpeed, blockSpeed, blockCount, fuelCount, name);
 			    configManager.fuels.put(id, fuel);
 			    
 				configManager.config.save();
@@ -222,7 +226,7 @@ public class PDrill extends JavaPlugin {
 				 sender.sendMessage( "----------------------------" );
 				 for( Drill entry : ownedDrills ){
 					 Fuel fuel = entry.FuelMG.fuel();
-					 sender.sendMessage( "ID: " +entry.id+ "ENABLED: " +entry.enabled+ "FUEL_ID: " +fuel.block_id+ "FUEL_LEFT: " +fuel.block_id+ "POSITION: " + entry.block.getLocation().toString());
+					 sender.sendMessage( "ID: " +entry.id + " ENABLED: " +entry.enabled+ " FUEL_ID: " +fuel.block_id+ " FUEL_LEFT: " +fuel.block_id);
 				 }
 				 sender.sendMessage( "----------------------------" );
 			}else if(what.equalsIgnoreCase( "fuel" )){
@@ -232,7 +236,7 @@ public class PDrill extends JavaPlugin {
 				 for( Entry<Integer, Fuel> entry : configManager.fuels.entrySet()){
 					 i++;
 					 Fuel fuel = entry.getValue();
-					 sender.sendMessage(" " + i + ":" );
+					 sender.sendMessage(" " + i + ": [" + fuel.configName + "]");
 					 sender.sendMessage("     " +"fuelId: " + fuel.block_id);
 					 sender.sendMessage("     " +"drillAirSpeed: " + fuel.drillAirSpeed );
 					 sender.sendMessage("     " +"drillBlockSpeed: " + fuel.drillBlockSpeed );
@@ -246,10 +250,8 @@ public class PDrill extends JavaPlugin {
 				 int i = 0;
 				 for( Entry<String, String> entry : configManager.scripts.entrySet()){
 					 i++;
-					 String name = entry.getKey();
-					 String script = entry.getValue();
-					 sender.sendMessage(" " + i + ": [" + name + "]");
-					 sender.sendMessage("     " +"Script: " + script );
+					 sender.sendMessage(" " + i + ": [" + entry.getKey() + "]");
+					 sender.sendMessage("     " +"Script: " + entry.getValue() );
 				 }
 				 sender.sendMessage( "----------------------------" );
 			}else{
@@ -319,14 +321,20 @@ public class PDrill extends JavaPlugin {
 				Drill drill = drillManager.getDrillFromId( id );
 				
 				if(drill != null){
-					if(drill.blockPlaceManager == null){
-						drill.blockPlaceManager = new BlockPlaceManager( drill, Integer.parseInt(args[1]), args[2]);
+					if( !drill.isVirtual ){
+						if(drill.blockPlaceManager == null){
+							drill.blockPlaceManager = new BlockPlaceManager( drill, Integer.parseInt(args[1]), args[2]);
+							sender.sendMessage(prefix + "Place job created for drill ["+ id +"]");
+						}else{
+							drill.blockPlaceManager.blockPlaceInterval = Integer.parseInt(args[1]);
+							drill.blockPlaceManager.placeDirection = args[2];
+							sender.sendMessage(prefix + "Place job updated for drill ["+ id +"]");
+						}
 					}else{
-						drill.blockPlaceManager.blockPlaceInterval = Integer.parseInt(args[1]);
-						drill.blockPlaceManager.placeDirection = args[2];
+						sender.sendMessage(prefix + "Drill ["+ id +"] is LinkDrill!");
 					}
 				}else{
-					//sender.sendMessage( prefix + "");
+					sender.sendMessage(prefix + "No such drill ["+ id +"]!");
 				}
 			}
 		}

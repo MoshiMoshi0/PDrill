@@ -8,6 +8,7 @@ import org.bukkit.util.config.Configuration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 public class ConfigurationManager {
@@ -122,7 +123,7 @@ public class ConfigurationManager {
 			    Integer drillBlockSpeed = config.getInt(path + "drillBlockSpeed", -1);
 			    Integer fuelConsumptionBlockCount = config.getInt(path + "fuelConsumptionBlockCount", -1);
 			    Integer fuelConsumptionFuelCount = config.getInt(path + "fuelConsumptionFuelCount", -1);
-			    Fuel fuel = new Fuel(fuelId, drillAirSpeed, drillBlockSpeed, fuelConsumptionBlockCount, fuelConsumptionFuelCount);
+			    Fuel fuel = new Fuel(fuelId, drillAirSpeed, drillBlockSpeed, fuelConsumptionBlockCount, fuelConsumptionFuelCount, fuelNode);
 			    
 			    //logger.info( prefix + "New fuel added! [" + fuelId + " " + drillAirSpeed + " " + drillBlockSpeed + " " + fuelConsumptionBlockCount + " " + fuelConsumptionFuelCount + "]");
 			    fuels.put(fuelId, fuel);
@@ -155,11 +156,20 @@ public class ConfigurationManager {
 		
 	}
 
-	public String getScript(String scriptName) {
+	public String getScriptByName(String scriptName) {
 		if( scripts.containsKey( scriptName )){
 			return scripts.get( scriptName );
 		}else{
 			return "";
 		}
+	}
+
+	public Fuel getFuelByName(String string) {
+		for( Entry<Integer, Fuel> entry : fuels.entrySet() ){
+			if( entry.getValue().configName.equalsIgnoreCase( string )){
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 }

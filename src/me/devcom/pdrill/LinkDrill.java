@@ -13,10 +13,15 @@ public class LinkDrill extends Drill {
 	public LinkDrill(PDrill instance, Player player, ArrayList< Drill > blocks, Integer id, Fuel fuel) {
 		super(instance, player, blocks.get( 0 ).block , id);
 		DrillDB = blocks;
+		
+		for( Drill entry : DrillDB){
+			entry.parent = this;
+		}
+		
 		isVirtual = true;
 		virtualFuel = fuel;
 	}
-
+	
 	@Override
 	public boolean moveInDirection(String direction) {
 		if( allHasFuel() ){
@@ -42,13 +47,15 @@ public class LinkDrill extends Drill {
 			
 			blockCount++;
 			return true;
+		}else{
+			//owner.sendMessage( prefix );
 		}
 		return false;
 	}
 
 	private boolean allHasFuel() {
 		for( Drill entry : DrillDB){
-			if( entry.FuelMG.getFuelLevel() <= 0 ){
+			if( entry.FuelMG.getFuelLevel() <= 0 || entry.FuelMG.furnaceFuelId() != this.FuelMG.furnaceFuelId()){
 				return false;
 			}
 		}
@@ -87,5 +94,18 @@ public class LinkDrill extends Drill {
 			}
 		}
 		return true;
+	}
+
+
+	public void checkDatabase() {
+		if(DrillDB.size() == 1){
+			Drill entry = DrillDB.get(0);
+			entry.linked = false;
+			entry.parent = null;
+			
+			DrillDB.clear();
+			
+			enabled = false;
+		}
 	}
 }

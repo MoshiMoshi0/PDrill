@@ -34,9 +34,12 @@ public class Drill {
 	public Location downDir;
 
 	public final Logger logger = Logger.getLogger("Minecraft");
+	public final String prefix = "[PDrill] ";
 
 	public boolean isVirtual = false;
 	public Fuel virtualFuel = null;
+
+	public LinkDrill parent = null;
 	
 	public Drill(PDrill instance, Player player, Block block, Integer id){
 		plugin = instance;
@@ -157,12 +160,12 @@ public class Drill {
 	}
 
 	public void disable() {
-		owner.sendMessage( "Drill deactivated! [" + id +"]" );
+		owner.sendMessage(prefix + "Drill deactivated! [" + id +"]" );
 		enabled = false;
 	}
 	
 	public void enable() {
-		owner.sendMessage( "Drill activated! [" + id +"]" );
+		owner.sendMessage(prefix + "Drill activated! [" + id +"]" );
 		enabled = true;
 	}
 
@@ -185,5 +188,12 @@ public class Drill {
 		Location nextLoc = block.getLocation().add( getDirection(direction) );
 		Block nextBlock = block.getWorld().getBlockAt( nextLoc );
 		return !(plugin.configManager.stopblocks.contains( nextBlock.getTypeId() ) || (plugin.drillManager.getDrillFromBlock( nextBlock ) != null));
+	}
+
+	public void updateParentOnBreak() {
+		parent.DrillDB.remove( this );
+		owner.sendMessage( prefix + "Drill ["+ this.id +"] removed from parent [" + -parent.id + "]");
+		
+		parent.checkDatabase();
 	}
 }
