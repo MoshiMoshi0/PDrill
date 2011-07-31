@@ -17,6 +17,9 @@ public class FuelManager {
 	}
 
 	public Fuel fuel(){
+		if(drill.isVirtual){
+			return drill.virtualFuel;
+		}
 		Integer currentFuelId = furnaceFuelId();
 		return getFuelById( currentFuelId );
 	}
@@ -38,7 +41,7 @@ public class FuelManager {
 		return furnaceFuel().getAmount();
 	}
 
-	public void consumeFuel() {
+	public void consumeFuel(Integer fuelCount) {
 		Furnace furnace = (Furnace)drill.block.getState();
 		Inventory furnaceInv = furnace.getInventory();
 		
@@ -46,7 +49,7 @@ public class FuelManager {
 		Fuel fuel = getFuelById( currentFuelId );
 		
 		if(fuel != null){
-			Integer fuelLeft = getFuelLevel() - fuel.fuelConsumptionFuelCount;
+			Integer fuelLeft = getFuelLevel() - fuelCount;
 			
 			if( fuelLeft <= 0){
 				furnaceInv.remove(currentFuelId);
@@ -80,6 +83,15 @@ public class FuelManager {
 		nextBFurnaceInv.setItem(1,fuelStack);
 		
 		furnaceInv.remove(currentFuelId);
+		
+		if(drill.blockPlaceManager != null){
+			ItemStack placeStack = furnaceInv.getItem(0);
+			Integer currentPlaceId = placeStack.getTypeId();
+			furnaceInv.remove(currentPlaceId);
+			
+			ItemStack newPlaceStack = new ItemStack( currentPlaceId, placeStack.getAmount() );
+			nextBFurnaceInv.setItem(0,newPlaceStack);
+		}
 	}
 
 }
