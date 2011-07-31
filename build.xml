@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<project name="build" default="deploy" basedir=".">
+	
+	<target name="deploy" depends="" description="Deploys plugin to Minecraft">
+		<echo level="info" message="pulling in property files" />
+		<property file="build.properties" />
+		
+		<jar jarfile="${minecraft-plugins.dir}/PDrill.jar" update="true">
+			<fileset dir="${bin.dir}"/>
+			<fileset file="${base.dir}/plugin.yml"/>
+		</jar>
+	</target>
+
+</project>
