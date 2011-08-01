@@ -67,6 +67,10 @@ public class PDrill extends JavaPlugin {
 			ArrayList<String> script = new ArrayList<String>();
 			ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[0] );
 			
+			if( drillIds.size() == 0 ){
+				return false;
+			}
+			
 			if(commandLabel.equalsIgnoreCase("pdscript")){
 				for(Integer i = 1; i < args.length; i++){
 					script.add( args[i] );
@@ -217,6 +221,9 @@ public class PDrill extends JavaPlugin {
 				configManager.config.save();
 			}
 		}else if(commandLabel.equalsIgnoreCase( "pdlist" )){
+			if(args.length == 0){
+				return false;
+			}
 			String what = args[0];
 			
 			if(what.equalsIgnoreCase( "drill" )){

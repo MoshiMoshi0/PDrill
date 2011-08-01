@@ -120,17 +120,22 @@ public class Drill {
 		if( plugin.configManager.dropItemNaturally){
 			if( nextBlock.getTypeId() != Material.AIR.getId() ){
 				boolean drop = false;
+				boolean changed = false;
 				Integer dropId = nextBlock.getTypeId();
 				
 				if(plugin.configManager.drops.containsKey( dropId )){
 					dropId = plugin.configManager.drops.get( dropId );
+					changed = true;
 				}
 				
 				if( plugin.configManager.dropItemList.isEmpty() ){
 					drop = true;
 				}else if( plugin.configManager.dropItemList.contains( dropId )){
 					drop = true;
+				}else if( changed && !plugin.configManager.checkItemChange ){
+					drop = true;
 				}
+				
 				if( drop ){
 					ItemStack dropStack = new ItemStack( dropId, 1 );
 	                block.getWorld().dropItemNaturally( nextBlock.getLocation() , dropStack);

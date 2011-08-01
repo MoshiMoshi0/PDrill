@@ -35,6 +35,8 @@ public class ConfigurationManager {
 	public boolean dropItemNaturally;
 	public List<Integer> dropItemList;
 	public List< Integer > stopblocks = new ArrayList< Integer >();
+
+	public boolean checkItemChange;
 	
 	public ConfigurationManager(PDrill instance, String name, String dir) {
 		plugin = instance;
@@ -51,6 +53,7 @@ public class ConfigurationManager {
 		
 		dropItemNaturally = config.getBoolean( "config.dropItemNaturally", false );
 		dropItemList = config.getIntList( "config.dropItemList", null );
+		checkItemChange = config.getBoolean( "config.checkItemChange", false );
 		blockSpeed = config.getDouble("config.speed", 0.1);
 		stopblocks = config.getIntList("config.stopBlocks", null);
 		

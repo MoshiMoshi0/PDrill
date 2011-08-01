@@ -1,6 +1,6 @@
 name: PDrill
 main: me.devcom.pdrill.PDrill
-version: 0.2
+version: 0.3.2
 description: >
              Bukkit programable drill plugin.
 commands:
@@ -30,4 +30,4 @@ commands:
     usage: /pdlink <drillId> <fuel_name>
   pdplace:
     description: Add new placer to drill
-    usage: /pdplacer <drillId> <place_interval> <place_direction>
+    usage: /pdplace <drillId> <place_interval> <place_direction>
