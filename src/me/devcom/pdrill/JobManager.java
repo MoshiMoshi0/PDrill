@@ -32,19 +32,20 @@ public class JobManager {
 			if(jobStr.matches( "LOOP.*\\(" )){
 				Integer start = i+1;
 				if(start >= script.size()){
-					
+					drill.owner.sendMessage( prefix + "Loop ["+ jobStr +"] is invalid");
+					return false;
 				}
-				// 012345
-				// LOOP5(
-
-				//drill.owner.sendMessage( jobStr + " " + jobStr.indexOf( "(" ) + jobStr.substring(4, 5 ).toString());
+				
 				Integer loopCount = Integer.parseInt( jobStr.substring(4, jobStr.indexOf( "(") ) );
 				
 				Integer j = start;
 				Integer end = -1;
 				String node = script.get(j);
-				while( j < script.size() && !node.equalsIgnoreCase(")")){
+				while(!node.equalsIgnoreCase(")")){
 					j++;
+					if( j >= script.size() ){
+						break;
+					}
 					node = script.get(j);
 				}
 				
@@ -52,7 +53,8 @@ public class JobManager {
 				if( node.equalsIgnoreCase( ")" )){
 					end = j;
 				}else{
-					
+					drill.owner.sendMessage( prefix + "Loop ["+ jobStr +"] probably has no closing parentesis");
+					return false;
 				}
 				
 				for(Integer n = 0; n < loopCount; n++) 
@@ -62,6 +64,7 @@ public class JobManager {
 					len =  jobStr.substring(1);
 					
 					if( !checkJob( dir, len) ){
+						drill.owner.sendMessage( prefix + "Wrong job string [" + jobStr + "]");
 						JobDB.clear();
 						return false;
 					}
@@ -75,7 +78,7 @@ public class JobManager {
 			}
 			
 			if( !checkJob( dir, len) ){
-				drill.owner.sendMessage( prefix + "Wrong job string [" + jobStr + "]");
+				drill.owner.sendMessage( prefix + "Wrong job [" + jobStr + "]");
 				JobDB.clear();
 				return false;
 			}
@@ -83,13 +86,7 @@ public class JobManager {
 			Job job = new Job(drill, dir, Integer.parseInt( len ));	
 			JobDB.add(job);
 		}
-		
-		String t = "";
-		for(Integer i =0; i<script.size(); i++){
-			t += script.get(i) + " ";
-		}
-		
-		drill.owner.sendMessage( t );
+
 		hasJob = true;
 		return true;
 	}

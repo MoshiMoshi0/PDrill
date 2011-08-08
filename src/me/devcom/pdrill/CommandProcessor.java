@@ -332,10 +332,10 @@ public class CommandProcessor {
 							sender.sendMessage(prefix + "Place job updated for drill ["+ id +"]");
 						}
 					}else{
-						sender.sendMessage(prefix + "Drill ["+ id +"] is LinkDrill!");
+						sender.sendMessage(prefix + "Drill with id ["+ id +"] is LinkDrill!");
 					}
 				}else{
-					sender.sendMessage(prefix + "No such drill ["+ id +"]!");
+					sender.sendMessage(prefix + "No such drill id ["+ id +"]");
 				}
 			}
 		}
@@ -356,7 +356,7 @@ public class CommandProcessor {
 					start = Integer.parseInt( idArgs[i] );
 					end = Integer.parseInt( idArgs[i + 2] );
 				} catch (NumberFormatException e) {
-			 		sender.sendMessage(prefix + start + " or " + end + " is not a valid number");
+			 		sender.sendMessage(prefix + idArgs[i] + " or " + idArgs[i + 2] + " is not a valid number");
 			 		break;
 				}finally {
 					for(Integer j = start; j <= end; j++){
@@ -370,7 +370,7 @@ public class CommandProcessor {
 			 		id = Integer.parseInt( idArgs[i] );
 			 		drillIds.add( id  );
 			 	} catch (NumberFormatException e) {
-			 		sender.sendMessage(prefix + id + " is not a valid number");
+			 		sender.sendMessage(prefix + idArgs[i] + " is not a valid number");
 			 		break;
 			 	}
 			}
@@ -396,7 +396,7 @@ public class CommandProcessor {
 					sender.sendMessage(prefix + "["+ drillId +"] Drill is linked!");
 				}
 			} else {
-				sender.sendMessage(prefix + "["+ drillId +"] No such drill!");
+				sender.sendMessage(prefix + "No such drill id ["+ drillId +"]");
 			}
 				
 			if(ret == 1){
