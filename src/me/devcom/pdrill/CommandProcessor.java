@@ -70,18 +70,17 @@ public class CommandProcessor {
 					}
 					
 					if(args.length - 2 > scriptArgsCount){
-						sender.sendMessage(prefix + "Too much arguments, ommiting [" + ((args.length - 2) - scriptArgsCount) + "]");
+						sender.sendMessage(prefix + "Too much arguments, ommiting [" + ((args.length - 2) - scriptArgsCount) + "] arguments");
 					}
 					
 					sender.sendMessage( scriptString );
 					
 					String[] scriptArgs = scriptString.split( " " );
-					
 					for(Integer i = 0; i < scriptArgs.length; i++){
 						script.add( scriptArgs[i] );
 					}
 				}else{
-					logger.info( prefix + "No such script!");
+					sender.sendMessage( prefix + "No such script [" + scriptName + "]");
 				}
 			}
 			
