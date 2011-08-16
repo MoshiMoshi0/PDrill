@@ -20,14 +20,12 @@ public class JobManager {
 		
 		valid = true;
 	}
-
+	
 	public boolean processScript( ArrayList<String> script){
 		if(!valid) return false;
 		
 		for(int i = 0; i < script.size(); i++){
 			String jobStr = script.get(i);
-			String dir = jobStr.substring(0, 1);
-			String len =  jobStr.substring(1);
 			
 			if(jobStr.matches( "LOOP.*\\(" )){
 				Integer start = i+1;
@@ -40,13 +38,21 @@ public class JobManager {
 				
 				Integer j = start;
 				Integer end = -1;
-				String node = script.get(j);
-				while(!node.equalsIgnoreCase(")")){
-					j++;
-					if( j >= script.size() ){
-						break;
-					}
+				Integer insideLoops = 0;
+				String node = "";
+				
+				while(j < script.size() ){
 					node = script.get(j);
+					if( node.matches( "LOOP.*\\(" ) ){
+						insideLoops++;
+					}else if( node.equalsIgnoreCase(")") ){
+						if( insideLoops > 0 ){
+							insideLoops -= 1;
+						}else{
+							break;
+						}
+					}
+					j++;
 				}
 				
 				
@@ -56,26 +62,27 @@ public class JobManager {
 					drill.owner.sendMessage( prefix + "Loop ["+ jobStr +"] probably has no closing parentesis");
 					return false;
 				}
-				
-				for(Integer n = 0; n < loopCount; n++) 
-				for(Integer k = start; k < end; k++){
-					jobStr = script.get(k);
-					dir = jobStr.substring(0, 1);
-					len =  jobStr.substring(1);
-					
-					if( !checkJob( dir, len) ){
-						drill.owner.sendMessage( prefix + "Wrong job string [" + jobStr + "]");
-						JobDB.clear();
-						return false;
+			
+				for(Integer n = 0; n < loopCount; n++){
+					for(Integer k = end - 1; k >= start; k--){
+
+						drill.owner.sendMessage(script.get( k ));
+						script.add( end + 1, script.get(k) );
 					}
-					
-					Job job = new Job(drill, dir, Integer.parseInt( len ));	
-					JobDB.add(job);
 				}
 				
-				i = end;
-				continue;
+				start--;
+				for(Integer k = start; k <= end; k++){
+					script.remove( (int)start );
+				}
+				i = -1;
 			}
+		}
+
+		
+		for( String jobStr : script){	
+			String dir = jobStr.substring(0, 1);
+			String len = jobStr.substring(1);
 			
 			if( !checkJob( dir, len) ){
 				drill.owner.sendMessage( prefix + "Wrong job [" + jobStr + "]");
@@ -86,7 +93,7 @@ public class JobManager {
 			Job job = new Job(drill, dir, Integer.parseInt( len ));	
 			JobDB.add(job);
 		}
-
+		
 		hasJob = true;
 		return true;
 	}

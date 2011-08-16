@@ -57,7 +57,12 @@ public class Job {
 		if( direction.matches("f|b|r|l|u|d") ){
 			
 			boolean canMove = false;
-			Fuel fuel = drill.FuelMG.fuel();
+			Fuel fuel = null;
+			if( drill.isVirtual ){
+				fuel = drill.virtualFuel;
+			}else{
+				fuel = drill.FuelMG.fuel();
+			}
 			
 			if(fuel != null){
 

@@ -51,13 +51,15 @@ public class Drill {
 		
 		JobMG = new JobManager( this );
 		FuelMG = new FuelManager( this );
-		
-		World world = block.getWorld();
 
+		createDirections( player.getWorld() );
+	}
+	
+	private void createDirections(World world) {
 		upDir = new Location(world, 0,1,0);
 		downDir = new Location( world, 0,-1,0);
 		
-		Vector direction = player.getLocation().getDirection();
+		Vector direction = owner.getLocation().getDirection();
 		if (direction.getZ() > .5d) {
 			forwardDir = new Location(world, 0, 0, 1);
 			rightDir = new Location(world, -1, 0, 0);
@@ -80,9 +82,8 @@ public class Drill {
 
 		leftDir = new Location(world, rightDir.getBlockX(), rightDir.getBlockY(), rightDir.getBlockZ());
 		leftDir.multiply(-1);
-
 	}
-	
+
 	public void update(){
 		JobMG.doJob();
 	}
@@ -165,12 +166,23 @@ public class Drill {
 	}
 
 	public void disable() {
-		owner.sendMessage(prefix + "Drill deactivated! [" + id +"]" );
+		if(isVirtual)
+			owner.sendMessage(prefix + "Drill deactivated! [" + -id +"]" );
+		else if( linked )
+			parent.disable();
+		else
+			owner.sendMessage(prefix + "Drill deactivated! [" + id +"]" );
 		enabled = false;
 	}
 	
 	public void enable() {
-		owner.sendMessage(prefix + "Drill activated! [" + id +"]" );
+		if(isVirtual)
+			owner.sendMessage(prefix + "Drill activated! [" + -id +"]" );
+		else if( linked )
+			parent.enable();
+		else
+			owner.sendMessage(prefix + "Drill activated! [" + id +"]" );
+
 		enabled = true;
 	}
 

@@ -11,11 +11,15 @@ public class LinkDrill extends Drill {
 
 	public ArrayList< Drill > DrillDB;
 	public LinkDrill(PDrill instance, Player player, ArrayList< Drill > blocks, Integer id, Fuel fuel) {
-		super(instance, player, blocks.get( 0 ).block , id);
+		super(instance, player, null , id);
+		this.FuelMG = null;
+		
 		DrillDB = blocks;
 		
 		for( Drill entry : DrillDB){
 			entry.parent = this;
+			if( entry.enabled == false )
+				entry.enable();
 		}
 		
 		isVirtual = true;
@@ -26,36 +30,20 @@ public class LinkDrill extends Drill {
 	public boolean moveInDirection(String direction) {
 		if( allHasFuel() ){
 			for( Drill entry : DrillDB){
-/*				Fuel fuel = entry.FuelMG.fuel();
-
-				Location nextLoc = entry.block.getLocation().add( getDirection(direction) );
-				Block nextBlock = entry.block.getWorld().getBlockAt( nextLoc );
-				dropBlock( nextBlock );
-				nextBlock.setTypeId( Material.FURNACE.getId() );
-				
-				if( blockCount >= fuel.fuelConsumptionBlockCount){
-					entry.FuelMG.consumeFuel();
-					blockCount = 0;
-				}
-				entry.FuelMG.swapFuel( nextBlock );
-				
-				entry.block.setTypeId( 0 );
-				entry.block = nextBlock;*/
-				
 				entry.moveInDirection(direction);
 			}
 			
 			blockCount++;
 			return true;
-		}else{
-			//owner.sendMessage( prefix );
 		}
 		return false;
 	}
 
 	private boolean allHasFuel() {
 		for( Drill entry : DrillDB){
-			if( entry.FuelMG.getFuelLevel() <= 0 || entry.FuelMG.furnaceFuelId() != this.FuelMG.furnaceFuelId()){
+			if( entry.FuelMG.getFuelLevel() <= 0 || ((int)entry.FuelMG.furnaceFuelId() != (int)this.virtualFuel.block_id )){
+				owner.sendMessage( prefix + "No fuel in drill with id [" + entry.id + "]");
+				disable();
 				return false;
 			}
 		}

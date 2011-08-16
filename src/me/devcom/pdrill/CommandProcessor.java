@@ -86,6 +86,9 @@ public class CommandProcessor {
 			
 			sendScripts(sender, drillIds, script);
 		}else if( commandLabel.equalsIgnoreCase( "pdlink" ) ){
+			if( args.length < 2 ){
+				return false;
+			}
 			ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[0]);
 			
 			boolean fail = false;
@@ -101,7 +104,7 @@ public class CommandProcessor {
 				}
 			}
 			
-			if(!fail){
+			if(!fail){			
 				ArrayList< Drill > drills = new ArrayList< Drill >();
 				for( Integer id : drillIds ){
 					Drill drill = drillManager.getDrillFromId( id );
@@ -109,6 +112,7 @@ public class CommandProcessor {
 					drill.linked = true;
 					drills.add( drill );
 				}
+				
 				Player player = (Player)sender;
 				Integer id = drillManager.LinkDB.size() + 1;
 				Fuel fuel = configManager.getFuelByName( args[1] );
@@ -121,6 +125,28 @@ public class CommandProcessor {
 				}else{
 					sender.sendMessage( prefix + "No such fuel [" + args[1] + "] in database");
 				}
+			}
+			return true;
+		}else if( commandLabel.equalsIgnoreCase( "pddelink" )){
+			ArrayList<Integer> drillIds = getDrillIdsFromString( sender, args[0]);
+			
+			if( drillIds.size() > 0 ){
+				for( Integer id : drillIds ){
+					LinkDrill drill = plugin.drillManager.getLinkDrillFromId( -id );
+					
+					if( drill != null ){
+						for( Drill subDrill : drill.DrillDB ){
+							subDrill.linked = false;
+						}
+					}else{
+						//@TODO
+					}
+					
+					drill.owner.sendMessage( prefix + "Unlinked " + drillIds.toString() + " from [" + -id + "]");
+					plugin.drillManager.LinkDB.remove( drill );
+				}
+			}else{
+				return false;
 			}
 			return true;
 		}else if( commandLabel.equalsIgnoreCase( "pdcreate" ) ){
@@ -382,7 +408,13 @@ public class CommandProcessor {
 	private void sendScripts(CommandSender sender, ArrayList<Integer> drillIds, ArrayList<String> script) {
 		Integer ret;
 		for(Integer drillId : drillIds){
-			Drill drill = drillManager.getDrillFromId( drillId );
+			Drill drill;
+			if(drillId < 0){
+				drill = drillManager.getLinkDrillFromId( -drillId );
+			}else{
+				drill = drillManager.getDrillFromId( drillId );
+			}
+
 			ret = -1;
 			
 			if( drill != null){
