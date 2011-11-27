@@ -34,9 +34,12 @@ public class Drill {
 	public Location downDir;
 
 	public final Logger logger = Logger.getLogger("Minecraft");
+	public final String prefix = "[PDrill] ";
 
 	public boolean isVirtual = false;
 	public Fuel virtualFuel = null;
+
+	public LinkDrill parent = null;
 	
 	public Drill(PDrill instance, Player player, Block block, Integer id){
 		plugin = instance;
@@ -48,13 +51,15 @@ public class Drill {
 		
 		JobMG = new JobManager( this );
 		FuelMG = new FuelManager( this );
-		
-		World world = block.getWorld();
 
+		createDirections( player.getWorld() );
+	}
+	
+	private void createDirections(World world) {
 		upDir = new Location(world, 0,1,0);
 		downDir = new Location( world, 0,-1,0);
 		
-		Vector direction = player.getLocation().getDirection();
+		Vector direction = owner.getLocation().getDirection();
 		if (direction.getZ() > .5d) {
 			forwardDir = new Location(world, 0, 0, 1);
 			rightDir = new Location(world, -1, 0, 0);
@@ -79,7 +84,7 @@ public class Drill {
 		leftDir.multiply(-1);
 
 	}
-	
+
 	public void update(){
 		JobMG.doJob();
 	}
@@ -117,17 +122,22 @@ public class Drill {
 		if( plugin.configManager.dropItemNaturally){
 			if( nextBlock.getTypeId() != Material.AIR.getId() ){
 				boolean drop = false;
+				boolean changed = false;
 				Integer dropId = nextBlock.getTypeId();
 				
 				if(plugin.configManager.drops.containsKey( dropId )){
 					dropId = plugin.configManager.drops.get( dropId );
+					changed = true;
 				}
 				
 				if( plugin.configManager.dropItemList.isEmpty() ){
 					drop = true;
 				}else if( plugin.configManager.dropItemList.contains( dropId )){
 					drop = true;
+				}else if( changed && !plugin.configManager.checkItemChange ){
+					drop = true;
 				}
+				
 				if( drop ){
 					ItemStack dropStack = new ItemStack( dropId, 1 );
 	                block.getWorld().dropItemNaturally( nextBlock.getLocation() , dropStack);
@@ -157,12 +167,23 @@ public class Drill {
 	}
 
 	public void disable() {
-		owner.sendMessage( "Drill deactivated! [" + id +"]" );
+		if(isVirtual)
+			owner.sendMessage(prefix + "Drill deactivated! [" + -id +"]" );
+		else if( linked )
+			parent.disable();
+		else
+			owner.sendMessage(prefix + "Drill deactivated! [" + id +"]" );
 		enabled = false;
 	}
 	
 	public void enable() {
-		owner.sendMessage( "Drill activated! [" + id +"]" );
+		if(isVirtual)
+			owner.sendMessage(prefix + "Drill activated! [" + -id +"]" );
+		else if( linked )
+			parent.enable();
+		else
+			owner.sendMessage(prefix + "Drill activated! [" + id +"]" );
+
 		enabled = true;
 	}
 
@@ -185,5 +206,12 @@ public class Drill {
 		Location nextLoc = block.getLocation().add( getDirection(direction) );
 		Block nextBlock = block.getWorld().getBlockAt( nextLoc );
 		return !(plugin.configManager.stopblocks.contains( nextBlock.getTypeId() ) || (plugin.drillManager.getDrillFromBlock( nextBlock ) != null));
+	}
+
+	public void updateParentOnBreak() {
+		parent.DrillDB.remove( this );
+		owner.sendMessage( prefix + "Drill ["+ this.id +"] removed from parent [" + -parent.id + "]");
+		
+		parent.checkDatabase();
 	}
 }

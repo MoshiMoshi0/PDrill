@@ -48,16 +48,18 @@ public class FuelManager {
 		Integer currentFuelId = furnaceFuelId();
 		Fuel fuel = getFuelById( currentFuelId );
 		
+		
 		if(fuel != null){
 			Integer fuelLeft = getFuelLevel() - fuelCount;
 			
 			if( fuelLeft <= 0){
-				furnaceInv.remove(currentFuelId);
+				
+				furnaceInv.clear(1);
 				return;
 			}
 			
 			ItemStack fuelStack = new ItemStack( currentFuelId, fuelLeft);
-			furnaceInv.remove(currentFuelId);
+			furnaceInv.clear(1);
 			furnaceInv.setItem(1,fuelStack);
 		}
 	}
@@ -70,20 +72,23 @@ public class FuelManager {
 	}
 
 	public void swapFuel(Block nextBlock) {
-		Furnace furnace = (Furnace)drill.block.getState();
-		Inventory furnaceInv = furnace.getInventory();
 		
-		Integer currentFuelId = furnaceFuelId();
+			Furnace furnace = (Furnace)drill.block.getState();
+			Inventory furnaceInv = furnace.getInventory();
+			
+			Integer currentFuelId = furnaceFuelId();
+			
+			Furnace nextBFurnace = (Furnace)nextBlock.getState();
+			Inventory nextBFurnaceInv = nextBFurnace.getInventory(); 
 		
-		Furnace nextBFurnace = (Furnace)nextBlock.getState();
-		Inventory nextBFurnaceInv = nextBFurnace.getInventory(); 
-	
-		ItemStack fuelStack = new ItemStack( currentFuelId, getFuelLevel());
-		nextBFurnaceInv.remove(currentFuelId);
-		nextBFurnaceInv.setItem(1,fuelStack);
-		
-		furnaceInv.remove(currentFuelId);
-		
+		if( getFuelLevel() > 0 ){
+			ItemStack fuelStack = new ItemStack( currentFuelId, getFuelLevel());
+
+			nextBFurnaceInv.remove(currentFuelId);
+			nextBFurnaceInv.setItem(1,fuelStack);
+			
+			furnaceInv.remove(currentFuelId);
+		}
 		if(drill.blockPlaceManager != null){
 			ItemStack placeStack = furnaceInv.getItem(0);
 			Integer currentPlaceId = placeStack.getTypeId();

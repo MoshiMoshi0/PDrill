@@ -27,9 +27,13 @@ public class DrillBlockListener extends BlockListener {
 		if(block.getType().equals( Material.FURNACE )){
 			Drill drill = drillManager.getDrillFromBlock(block);
 			
-			if( drill != null && drill.enabled ){
+			if( drill != null ){
 				drillManager.remove( drill );
 				player.sendMessage("Drill removed! [" + drill.id +"]");
+				
+				if( drill.linked ){
+					drill.updateParentOnBreak();
+				}
 			}
 		}
 	}

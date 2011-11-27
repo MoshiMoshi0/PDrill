@@ -8,6 +8,7 @@ import org.bukkit.util.config.Configuration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 public class ConfigurationManager {
@@ -34,6 +35,8 @@ public class ConfigurationManager {
 	public boolean dropItemNaturally;
 	public List<Integer> dropItemList;
 	public List< Integer > stopblocks = new ArrayList< Integer >();
+
+	public boolean checkItemChange;
 	
 	public ConfigurationManager(PDrill instance, String name, String dir) {
 		plugin = instance;
@@ -50,6 +53,7 @@ public class ConfigurationManager {
 		
 		dropItemNaturally = config.getBoolean( "config.dropItemNaturally", false );
 		dropItemList = config.getIntList( "config.dropItemList", null );
+		checkItemChange = config.getBoolean( "config.checkItemChange", false );
 		blockSpeed = config.getDouble("config.speed", 0.1);
 		stopblocks = config.getIntList("config.stopBlocks", null);
 		
@@ -122,7 +126,7 @@ public class ConfigurationManager {
 			    Integer drillBlockSpeed = config.getInt(path + "drillBlockSpeed", -1);
 			    Integer fuelConsumptionBlockCount = config.getInt(path + "fuelConsumptionBlockCount", -1);
 			    Integer fuelConsumptionFuelCount = config.getInt(path + "fuelConsumptionFuelCount", -1);
-			    Fuel fuel = new Fuel(fuelId, drillAirSpeed, drillBlockSpeed, fuelConsumptionBlockCount, fuelConsumptionFuelCount);
+			    Fuel fuel = new Fuel(fuelId, drillAirSpeed, drillBlockSpeed, fuelConsumptionBlockCount, fuelConsumptionFuelCount, fuelNode);
 			    
 			    //logger.info( prefix + "New fuel added! [" + fuelId + " " + drillAirSpeed + " " + drillBlockSpeed + " " + fuelConsumptionBlockCount + " " + fuelConsumptionFuelCount + "]");
 			    fuels.put(fuelId, fuel);
@@ -155,11 +159,20 @@ public class ConfigurationManager {
 		
 	}
 
-	public String getScript(String scriptName) {
+	public String getScriptByName(String scriptName) {
 		if( scripts.containsKey( scriptName )){
 			return scripts.get( scriptName );
 		}else{
 			return "";
 		}
+	}
+
+	public Fuel getFuelByName(String string) {
+		for( Entry<Integer, Fuel> entry : fuels.entrySet() ){
+			if( entry.getValue().configName.equalsIgnoreCase( string )){
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 }
