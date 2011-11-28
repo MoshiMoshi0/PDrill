@@ -51,19 +51,10 @@ public class DrillManager {
 	}
 
 	public Drill getDrillFromId(Integer drillId) {
-		if( drillId >= 0){
-			for (Drill entry : DrillDB) {
-			    if( entry.id.equals( drillId )){
-			    	return entry;
-			    }
-			}
-		}else{
-			drillId *= -1;
-			for (Drill entry : LinkDB) {
-			    if( entry.id.equals( drillId )){
-			    	return entry;
-			    }
-			}
+		for (Drill entry : DrillDB) {
+		    if( entry.id.equals( drillId )){
+		    	return entry;
+		    }
 		}
 		return null;
 	}

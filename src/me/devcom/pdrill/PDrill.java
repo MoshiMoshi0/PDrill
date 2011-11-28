@@ -2,13 +2,10 @@ package me.devcom.pdrill;
 
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
@@ -16,16 +13,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
 public class PDrill extends JavaPlugin {
-	public static PDrill plugin;
 	
 	public BukkitScheduler sheduler;
+
+	public final ConfigurationManager configManager = new ConfigurationManager(this, "config.yml", "plugins/PDrill/");
 	public final DrillManager drillManager = new DrillManager( this );
+	private final CommandProcessor commandProcessor = new CommandProcessor(this);
+	
 	public final DrillBlockListener blockListener = new DrillBlockListener( this );
 	public final DrillPlayerListener playerListener = new DrillPlayerListener( this );
 	public final Logger logger = Logger.getLogger("Minecraft");
 	public final String prefix = "[PDrill] ";
-
-	public final ConfigurationManager configManager = new ConfigurationManager(this, "config.yml", "plugins/PDrill/");
 
 	@Override 
 	public void onDisable(){
@@ -35,12 +33,11 @@ public class PDrill extends JavaPlugin {
 	
 	@Override 
 	public void onEnable(){
-		plugin = this;
-		
-		sheduler = plugin.getServer().getScheduler();
-		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent( Event.Type.PLAYER_INTERACT, this.playerListener, Event.Priority.Normal, this);
-		pm.registerEvent( Event.Type.BLOCK_BREAK, this.blockListener, Event.Priority.Normal, this);
+		final PDrill plugin = this;
+		sheduler = this.getServer().getScheduler();
+		PluginManager pm = this.getServer().getPluginManager();
+		pm.registerEvent( Event.Type.PLAYER_INTERACT, playerListener, Event.Priority.Normal, this);
+		pm.registerEvent( Event.Type.BLOCK_BREAK, blockListener, Event.Priority.Normal, this);
 		
 		File dir = new File( "plugins/PDrill" );
 		if(!dir.exists()){

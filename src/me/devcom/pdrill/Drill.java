@@ -82,7 +82,6 @@ public class Drill {
 
 		leftDir = new Location(world, rightDir.getBlockX(), rightDir.getBlockY(), rightDir.getBlockZ());
 		leftDir.multiply(-1);
-
 	}
 
 	public void update(){
